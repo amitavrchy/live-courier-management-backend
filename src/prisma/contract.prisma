@@ -1,0 +1,478 @@
+// use prisma-8
+
+enum RosterStatus {
+  PUBLISHED
+  DRAFT
+  UNASSIGNED
+}
+
+enum ActionName {
+  VIEW
+  EDIT
+}
+
+enum RepairRequestStatus {
+  PENDING_REVIEW
+  APPROVED
+  COMPLETED
+  REJECTED
+}
+
+enum InspectionStatus {
+  PASSED
+  ISSUE
+}
+
+enum MaintenancePriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FuelType {
+  Diesel
+  Octane
+  Petrol
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  MAINTENANCE
+  ASSIGNED
+  UNAVAILABLE
+  INSPECTION_REQUIRED
+  REPAIR_REQUIRED
+  GROUNDED
+}
+
+enum PriorityLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum User_Status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum User_Role {
+  PLATFORM_ADMIN
+  BUSINESS_ADMIN
+  SUPERVISOR
+  FLEET_MANAGER
+  ROSTER_MANAGER
+  DRIVER
+  ASSISTANT_DRIVER
+}
+
+enum Employment_Type {
+  FULL_TIME
+  PART_TIME
+  CONTRACTUAL
+}
+
+// ───────────────────────── Models ─────────────────────────
+
+model TenantSettings {
+  id             String  @id @default(uuid()) @db.Uuid
+  companyName    String
+  businessNumber String?
+  supportEmail   String?
+  supportPhone   String?
+  isTwoFactorOn  Boolean @default(false)
+  masterPassword String?
+
+  users Users[]
+}
+
+model Users {
+  id             String          @id @default(uuid()) @db.Uuid
+  tenantId       String?         @db.Uuid
+  fullName       String
+  email          String          @unique
+  phone          String?         @unique
+  password       String
+  employee_id    String          @unique
+  role           User_Role
+  employmentType Employment_Type @map("employment_type")
+  depot          String?
+  status         User_Status     @default(ACTIVE)
+  createdAt      DateTime        @default(now())
+
+  tenant TenantSettings? @relation(fields: [tenantId], references: [id])
+
+  deliveries          Delivery[]
+  fleetVehicles       Fleet[]
+  inspections         Inspections[]
+  damageReports       DamageReport[]
+  repairRequests      RepairRequest[]
+  rosterAsDriver      Roster[]        @relation("RosterDriver")
+  rosterAsAssistant   Roster[]        @relation("RosterAssistant")
+  compliance          Compliance[]
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+  conversationsAsUser1 Conversation[] @relation("ConversationUser1")
+  conversationsAsUser2 Conversation[] @relation("ConversationUser2")
+  messages            Message[]
+
+  @@index([tenantId])
+  @@index([role])
+  @@index([status])
+  @@index([depot])
+}
+
+model Delivery {
+  id                String         @id @default(uuid()) @db.Uuid
+  customerName      String
+  operationalZone   String?
+  destination       String
+  assignedDriver    String?        @db.Uuid
+  assignedVehicle   String?        @db.Uuid
+  scheduledDropTime DateTime?
+  priorityLevel     PriorityLevel  @default(MEDIUM)
+  isDispatched      Boolean        @default(false)
+  status            String?
+  scheduledWindow   DateTime?
+  currentETA        DateTime?
+  remainingDistance String?
+  createdAt         DateTime       @default(now())
+
+  driver   Users? @relation(fields: [assignedDriver], references: [id])
+  vehicle  Fleet? @relation(fields: [assignedVehicle], references: [id])
+  packages DeliveryPackage[]
+
+  @@index([assignedDriver])
+  @@index([assignedVehicle])
+  @@index([status])
+  @@index([isDispatched])
+  @@index([priorityLevel])
+  @@index([scheduledDropTime])
+  @@index([operationalZone])
+  @@index([createdAt])
+}
+
+model DeliveryPackage {
+  id          String   @id @default(uuid()) @db.Uuid
+  description String?
+  weight      Float?
+  deliveryId  String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id])
+
+  @@index([deliveryId])
+}
+
+model Fleet {
+  id                 String        @id @default(uuid()) @db.Uuid
+  name               String
+  registration       String?
+  depot              String?
+  assignedDriver     String?       @db.Uuid
+  status             VehicleStatus @default(AVAILABLE)
+  nextService        DateTime?
+  vehicleCode        String?
+  year               DateTime?
+  bodyType           String?
+  fuelType           FuelType?
+  currentOdometer    Float?
+  registrationExpiry String?
+  insuranceExpiry    String?
+  createdAt          DateTime      @default(now())
+
+  driver Users? @relation(fields: [assignedDriver], references: [id])
+
+  deliveries     Delivery[]
+  maintenance    Maintenance[]
+  inspections    Inspections[]
+  damageReports  DamageReport[]
+  repairRequests RepairRequest[]
+  rosters        Roster[]
+
+  @@index([assignedDriver])
+  @@index([status])
+  @@index([depot])
+  @@index([nextService])
+  @@index([registration])
+}
+
+model Maintenance {
+  id                   String                   @id @default(uuid()) @db.Uuid
+  vehicleId            String                   @db.Uuid
+  workCheckList        String[]
+  maintenanceType      String?
+  priorityLevel        MaintenancePriorityLevel @default(MEDIUM)
+  description          String?
+  maintenanceDate      DateTime?
+  assignedDepot        Int?
+  startTime            DateTime?
+  expectedCompletion   DateTime?
+  serviceLocationType  String?
+  serviceProviderName  String?
+  contactPhone         String?
+  estimatedPartsPrice  Float?
+  estimatedLaborPrice  Float?
+  totalEstimatedPrice  Float?
+  vehicleAvailability  String?
+  provider             String?
+  location             String?
+  createdAt            DateTime                 @default(now()) @map("createdat")
+
+  vehicle Fleet @relation(fields: [vehicleId], references: [id])
+
+  @@index([vehicleId])
+  @@index([priorityLevel])
+  @@index([maintenanceDate])
+  @@index([vehicleId, maintenanceDate])
+}
+
+model Inspections {
+  id         String           @id @default(uuid()) @db.Uuid
+  driverId   String           @db.Uuid
+  vehicleId  String           @db.Uuid
+  tyres      InspectionStatus
+  lights     InspectionStatus
+  mirrors    InspectionStatus
+  brakes     InspectionStatus
+  horn       InspectionStatus
+  fuel       InspectionStatus
+  exterior   InspectionStatus
+  driverNote String?
+  photos     String[]
+  createdAt  DateTime         @default(now())
+
+  driver  Users @relation(fields: [driverId], references: [id])
+  vehicle Fleet @relation(fields: [vehicleId], references: [id])
+
+  @@index([driverId])
+  @@index([vehicleId])
+  @@index([createdAt])
+  @@index([vehicleId, createdAt])
+}
+
+model DamageType {
+  id                    String   @id @default(uuid()) @db.Uuid
+  name                  String
+  description           String?
+  severity              String?
+  isRequirePhotoEvidence Boolean @default(false)
+  isActive              Boolean  @default(true)
+  isAutomaticallyGround Boolean  @default(false)
+  createdAt             DateTime @default(now())
+
+  @@index([isActive])
+}
+
+model IncidentType {
+  id                             String   @id @default(uuid()) @db.Uuid
+  name                           String
+  description                    String?
+  severity                       String?
+  isMandatorySupervisorReview    Boolean  @default(false)
+  isRequirePoliceReport          Boolean  @default(false)
+  isRequireStatutoryNotification Boolean  @default(false)
+  isActive                       Boolean  @default(true)
+  createdAt                      DateTime @default(now())
+
+  @@index([isActive])
+}
+
+model DamageReport {
+  id          String   @id @default(uuid()) @db.Uuid
+  reportedBy  String   @db.Uuid
+  vehicle     String   @db.Uuid
+  location    String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  reporter Users @relation(fields: [reportedBy], references: [id])
+  fleet    Fleet @relation(fields: [vehicle], references: [id])
+
+  @@index([reportedBy])
+  @@index([vehicle])
+  @@index([createdAt])
+}
+
+model RepairRequest {
+  id                        String                   @id @default(uuid()) @db.Uuid
+  repairID                  String?                  @db.Uuid
+  issue                     String
+  reportedBy                String                   @db.Uuid
+  priority                  MaintenancePriorityLevel @default(MEDIUM)
+  date                      DateTime                 @default(now())
+  status                    RepairRequestStatus      @default(PENDING_REVIEW)
+  vehicle                   String                   @db.Uuid
+  photos                    String[]
+  severity                  String?
+  safetyImpact              String?
+  canOperating              Boolean?
+  repairEstimatedPartsPrice Float?
+  repairEstimatedLaborPrice Float?
+  totalEstimatedCost        Float?
+
+  reporter Users @relation(fields: [reportedBy], references: [id])
+  fleet    Fleet @relation(fields: [vehicle], references: [id])
+
+  @@index([reportedBy])
+  @@index([vehicle])
+  @@index([status])
+  @@index([priority])
+  @@index([repairID])
+  @@index([vehicle, status])
+}
+
+model Access_Roles {
+  id    String    @id @default(uuid()) @db.Uuid
+  roles User_Role
+
+  permissions RolePermission[]
+}
+
+model Access_Module {
+  id           String @id @default(uuid()) @db.Uuid
+  accessModule String
+
+  permissions RolePermission[]
+}
+
+model AccessAction {
+  id         String     @id @default(uuid()) @db.Uuid
+  actionName ActionName
+
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  id           String @id @default(uuid()) @db.Uuid
+  roleID       String @db.Uuid
+  moduleID     String @db.Uuid
+  permissionID String @db.Uuid
+
+  role       Access_Roles  @relation(fields: [roleID], references: [id])
+  module     Access_Module @relation(fields: [moduleID], references: [id])
+  permission AccessAction  @relation(fields: [permissionID], references: [id])
+
+  @@unique([roleID, moduleID, permissionID])
+  @@index([moduleID])
+  @@index([permissionID])
+}
+
+model Roster {
+  id         String       @id @default(uuid()) @db.Uuid
+  driverId   String       @db.Uuid
+  assistantId String?     @db.Uuid
+  shiftStart DateTime
+  shiftEnd   DateTime
+  breakStart DateTime?
+  breakEnd   DateTime?
+  vehicle    String?      @db.Uuid
+  type       String?
+  status     RosterStatus @default(DRAFT)
+  rosterDate DateTime
+  depot      String?
+
+  driver    Users  @relation("RosterDriver", fields: [driverId], references: [id])
+  assistant Users? @relation("RosterAssistant", fields: [assistantId], references: [id])
+  fleet     Fleet? @relation(fields: [vehicle], references: [id])
+
+  @@index([driverId])
+  @@index([assistantId])
+  @@index([vehicle])
+  @@index([status])
+  @@index([rosterDate])
+  @@index([depot, rosterDate])
+  @@index([driverId, rosterDate])
+}
+
+model Compliance {
+  id                       String    @id @default(uuid()) @db.Uuid
+  driverId                 String    @db.Uuid
+  licenseURL               String?
+  licenseNumber            String?
+  licenseExpiry            DateTime?
+  visaURL                  String?
+  visaExpiry               DateTime?
+  safetyInductionExpiry    DateTime?
+  defensiveDrivingExpiry   DateTime?
+  firstaidExpiry           DateTime?
+  medicalCertificateExpiry DateTime?
+  policeCheckExpiry        DateTime?
+  employmentContractExpiry DateTime?
+  emergencyContact         String?
+  todaysHours              String?
+  weeklyHours              String?
+  remaining                String?
+
+  driver Users @relation(fields: [driverId], references: [id])
+
+  @@index([driverId])
+  @@index([licenseExpiry])
+  @@index([visaExpiry])
+  @@index([medicalCertificateExpiry])
+  @@index([policeCheckExpiry])
+}
+
+model AuditLog {
+  id              String   @id @default(uuid()) @db.Uuid
+  actor           String   @db.Uuid
+  actionPerformed String
+  targetEntity    String?
+  module          String?
+  ip              String?
+  timestamp       DateTime @default(now())
+
+  user Users @relation(fields: [actor], references: [id])
+
+  @@index([actor])
+  @@index([timestamp])
+  @@index([module])
+  @@index([actor, timestamp])
+}
+
+model Notification {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  title       String
+  description String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user Users @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+model Conversation {
+  id        String   @id @default(uuid()) @db.Uuid
+  user1id   String   @db.Uuid
+  user2id   String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user1    Users     @relation("ConversationUser1", fields: [user1id], references: [id])
+  user2    Users     @relation("ConversationUser2", fields: [user2id], references: [id])
+  messages Message[]
+
+  @@unique([user1id, user2id])
+  @@index([user2id])
+}
+
+model Message {
+  id             String    @id @default(uuid()) @db.Uuid
+  senderId       String    @db.Uuid
+  conversationId String    @db.Uuid
+  content        String
+  timestamp      DateTime  @default(now())
+  isDelivered    DateTime?
+  isSeen         DateTime?
+
+  sender       Users        @relation(fields: [senderId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([senderId])
+  @@index([conversationId, timestamp])
+}
