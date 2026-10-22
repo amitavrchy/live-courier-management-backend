@@ -1,7 +1,7 @@
 # Live Courier Management Backend
 
 NestJS API with PostgreSQL, Prisma 6, Redis/BullMQ, JWT authentication, and SMTP email.
-Requires Node.js 22 and Docker with Compose v2 or newer.
+Requires Node.js 24.9+ (Node 24 LTS) and Docker with Compose v2 or newer.
 
 ## Local development
 
