@@ -31,11 +31,9 @@ while [ "$i" -le "$ATTEMPTS" ]; do
 done
 
 if [ "${RUN_DB_INIT:-true}" = "true" ]; then
-  echo "[entrypoint] Bootstrapping database schema (prisma db init)..."
-  # Prefer emitted contract when available; ignore failures so the API can still boot.
-  npx prisma contract emit || true
-  npx prisma db init --yes --db "$DATABASE_URL" || {
-    echo "[entrypoint] Warning: prisma db init did not complete. App will still start." >&2
+  echo "[entrypoint] Synchronizing database schema (prisma db push)..."
+  npx prisma db push --skip-generate || {
+    echo "[entrypoint] Warning: prisma db push did not complete. App will still start." >&2
   }
 fi
 

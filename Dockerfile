@@ -12,7 +12,7 @@ RUN npm ci
 # ---- Build ----
 FROM deps AS build
 COPY . .
-RUN npx prisma contract emit || true
+RUN npx prisma generate
 RUN npm run build
 
 # ---- Production ----
@@ -22,21 +22,20 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3001
 
 COPY package.json package-lock.json ./
+COPY prisma/schema.prisma ./prisma/schema.prisma
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma.config.ts ./prisma.config.ts
-COPY --from=build /app/src/prisma ./src/prisma
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh \
   && chown -R node:node /app
 
 USER node
-EXPOSE 3000
+EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -fsS "http://127.0.0.1:${PORT}/" || exit 1

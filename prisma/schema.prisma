@@ -1,4 +1,11 @@
-// use prisma-8
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 enum RosterStatus {
   PUBLISHED
@@ -105,19 +112,19 @@ model Users {
 
   tenant TenantSettings? @relation(fields: [tenantId], references: [id])
 
-  deliveries          Delivery[]
-  fleetVehicles       Fleet[]
-  inspections         Inspections[]
-  damageReports       DamageReport[]
-  repairRequests      RepairRequest[]
-  rosterAsDriver      Roster[]        @relation("RosterDriver")
-  rosterAsAssistant   Roster[]        @relation("RosterAssistant")
-  compliance          Compliance[]
-  auditLogs           AuditLog[]
-  notifications       Notification[]
-  conversationsAsUser1 Conversation[] @relation("ConversationUser1")
-  conversationsAsUser2 Conversation[] @relation("ConversationUser2")
-  messages            Message[]
+  deliveries           Delivery[]
+  fleetVehicles        Fleet[]
+  inspections          Inspections[]
+  damageReports        DamageReport[]
+  repairRequests       RepairRequest[]
+  rosterAsDriver       Roster[]        @relation("RosterDriver")
+  rosterAsAssistant    Roster[]        @relation("RosterAssistant")
+  compliance           Compliance[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  conversationsAsUser1 Conversation[]  @relation("ConversationUser1")
+  conversationsAsUser2 Conversation[]  @relation("ConversationUser2")
+  messages             Message[]
 
   @@index([tenantId])
   @@index([role])
@@ -126,23 +133,23 @@ model Users {
 }
 
 model Delivery {
-  id                String         @id @default(uuid()) @db.Uuid
+  id                String        @id @default(uuid()) @db.Uuid
   customerName      String
   operationalZone   String?
   destination       String
-  assignedDriver    String?        @db.Uuid
-  assignedVehicle   String?        @db.Uuid
+  assignedDriver    String?       @db.Uuid
+  assignedVehicle   String?       @db.Uuid
   scheduledDropTime DateTime?
-  priorityLevel     PriorityLevel  @default(MEDIUM)
-  isDispatched      Boolean        @default(false)
+  priorityLevel     PriorityLevel @default(MEDIUM)
+  isDispatched      Boolean       @default(false)
   status            String?
   scheduledWindow   DateTime?
   currentETA        DateTime?
   remainingDistance String?
-  createdAt         DateTime       @default(now())
+  createdAt         DateTime      @default(now())
 
-  driver   Users? @relation(fields: [assignedDriver], references: [id])
-  vehicle  Fleet? @relation(fields: [assignedVehicle], references: [id])
+  driver   Users?            @relation(fields: [assignedDriver], references: [id])
+  vehicle  Fleet?            @relation(fields: [assignedVehicle], references: [id])
   packages DeliveryPackage[]
 
   @@index([assignedDriver])
@@ -201,26 +208,26 @@ model Fleet {
 }
 
 model Maintenance {
-  id                   String                   @id @default(uuid()) @db.Uuid
-  vehicleId            String                   @db.Uuid
-  workCheckList        String[]
-  maintenanceType      String?
-  priorityLevel        MaintenancePriorityLevel @default(MEDIUM)
-  description          String?
-  maintenanceDate      DateTime?
-  assignedDepot        Int?
-  startTime            DateTime?
-  expectedCompletion   DateTime?
-  serviceLocationType  String?
-  serviceProviderName  String?
-  contactPhone         String?
-  estimatedPartsPrice  Float?
-  estimatedLaborPrice  Float?
-  totalEstimatedPrice  Float?
-  vehicleAvailability  String?
-  provider             String?
-  location             String?
-  createdAt            DateTime                 @default(now()) @map("createdat")
+  id                  String                   @id @default(uuid()) @db.Uuid
+  vehicleId           String                   @db.Uuid
+  workCheckList       String[]
+  maintenanceType     String?
+  priorityLevel       MaintenancePriorityLevel @default(MEDIUM)
+  description         String?
+  maintenanceDate     DateTime?
+  assignedDepot       Int?
+  startTime           DateTime?
+  expectedCompletion  DateTime?
+  serviceLocationType String?
+  serviceProviderName String?
+  contactPhone        String?
+  estimatedPartsPrice Float?
+  estimatedLaborPrice Float?
+  totalEstimatedPrice Float?
+  vehicleAvailability String?
+  provider            String?
+  location            String?
+  createdAt           DateTime                 @default(now()) @map("createdat")
 
   vehicle Fleet @relation(fields: [vehicleId], references: [id])
 
@@ -255,14 +262,14 @@ model Inspections {
 }
 
 model DamageType {
-  id                    String   @id @default(uuid()) @db.Uuid
-  name                  String
-  description           String?
-  severity              String?
-  isRequirePhotoEvidence Boolean @default(false)
-  isActive              Boolean  @default(true)
-  isAutomaticallyGround Boolean  @default(false)
-  createdAt             DateTime @default(now())
+  id                     String   @id @default(uuid()) @db.Uuid
+  name                   String
+  description            String?
+  severity               String?
+  isRequirePhotoEvidence Boolean  @default(false)
+  isActive               Boolean  @default(true)
+  isAutomaticallyGround  Boolean  @default(false)
+  createdAt              DateTime @default(now())
 
   @@index([isActive])
 }
@@ -362,18 +369,18 @@ model RolePermission {
 }
 
 model Roster {
-  id         String       @id @default(uuid()) @db.Uuid
-  driverId   String       @db.Uuid
-  assistantId String?     @db.Uuid
-  shiftStart DateTime
-  shiftEnd   DateTime
-  breakStart DateTime?
-  breakEnd   DateTime?
-  vehicle    String?      @db.Uuid
-  type       String?
-  status     RosterStatus @default(DRAFT)
-  rosterDate DateTime
-  depot      String?
+  id          String       @id @default(uuid()) @db.Uuid
+  driverId    String       @db.Uuid
+  assistantId String?      @db.Uuid
+  shiftStart  DateTime
+  shiftEnd    DateTime
+  breakStart  DateTime?
+  breakEnd    DateTime?
+  vehicle     String?      @db.Uuid
+  type        String?
+  status      RosterStatus @default(DRAFT)
+  rosterDate  DateTime
+  depot       String?
 
   driver    Users  @relation("RosterDriver", fields: [driverId], references: [id])
   assistant Users? @relation("RosterAssistant", fields: [assistantId], references: [id])

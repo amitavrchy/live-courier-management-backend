@@ -27,6 +27,20 @@ services:
     networks:
       - andyesqo
 
+  redis:
+    image: redis:7-alpine
+    container_name: andyesqo-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - andyesqo
+
   app:
     build:
       context: .
@@ -36,18 +50,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       NODE_ENV: production
-      PORT: ${PORT:-3000}
+      PORT: ${PORT:-3001}
       RUN_DB_INIT: ${RUN_DB_INIT:-true}
       DATABASE_URL: postgresql://${POSTGRES_USER:-andyesqo}:${POSTGRES_PASSWORD:-andyesqo}@postgres:5432/${POSTGRES_DB:-andyesqo}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-3001}:${PORT:-3001}"
     networks:
       - andyesqo
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   andyesqo:
