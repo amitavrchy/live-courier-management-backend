@@ -84,7 +84,7 @@ jobs:
       - name: Smoke test full stack and migrations
         run: |
           docker compose up -d --no-build --wait --wait-timeout 180
-          curl --fail --retry 5 --retry-delay 2 http://localhost:3001/api/v1/health
+          curl --fail --retry 5 --retry-delay 2 http://localhost:3001/v1/health
           docker compose exec -T app ./node_modules/.bin/prisma migrate status
       - name: Container logs
         if: failure()

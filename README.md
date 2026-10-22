@@ -16,7 +16,7 @@ npm run start:dev
 
 - API: http://localhost:3001/api/v1
 - Swagger: http://localhost:3001/docs
-- Health: http://localhost:3001/api/v1/health (process health, not database readiness)
+- Health: http://localhost:3001/v1/health (process health, not database readiness)
 
 Development PostgreSQL and Redis ports bind to localhost. `DATABASE_URL` in
 `.env.example` targets development PostgreSQL at localhost:5433.
