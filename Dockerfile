@@ -3,11 +3,15 @@
 # ---- Base ----
 FROM node:22-bookworm-slim AS base
 WORKDIR /app
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
 
 # ---- Dependencies (all, for build) ----
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm ci
+COPY prisma ./prisma
+RUN npm ci --include=dev
 
 # ---- Build ----
 FROM deps AS build
@@ -25,7 +29,7 @@ ENV NODE_ENV=production
 ENV PORT=3001
 
 COPY package.json package-lock.json ./
-COPY prisma/schema.prisma ./prisma/schema.prisma
+COPY prisma ./prisma
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
@@ -38,7 +42,7 @@ USER node
 EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD curl -fsS "http://127.0.0.1:${PORT}/" || exit 1
+  CMD curl -fsS "http://127.0.0.1:${PORT}/api/v1/health" || exit 1
 
 ENTRYPOINT ["dumb-init", "--", "entrypoint.sh"]
 CMD ["node", "dist/main.js"]

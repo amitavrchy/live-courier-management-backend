@@ -1,98 +1,117 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Live Courier Management Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS API with PostgreSQL, Prisma 6, Redis/BullMQ, JWT authentication, and SMTP email.
+Requires Node.js 22 and Docker with Compose v2 or newer.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Local development
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ npm install
+```sh
+cp .env.example .env
+# Edit .env: use a unique JWT_SECRET and set SMTP credentials if needed.
+npm ci
+npm run docker:db
+npx prisma migrate deploy
+npm run start:dev
 ```
 
-## Compile and run the project
+- API: http://localhost:3001/api/v1
+- Swagger: http://localhost:3001/docs
+- Health: http://localhost:3001/api/v1/health (process health, not database readiness)
 
-```bash
-# development
-$ npm run start
+Development PostgreSQL and Redis ports bind to localhost. `DATABASE_URL` in
+`.env.example` targets development PostgreSQL at localhost:5433.
+Run `npm run db:seed` locally only when demo users are wanted; change the sample
+seed passwords first. Docker startup does not seed demo accounts.
 
-# watch mode
-$ npm run start:dev
+## Docker stack
 
-# production mode
-$ npm run start:prod
+```sh
+cp .env.example .env
+# Set a strong JWT_SECRET and POSTGRES_PASSWORD before exposing the app.
+docker compose up -d --build --wait
+docker compose logs -f app
 ```
 
-## Run tests
+Compose starts the API, PostgreSQL, and Redis with healthchecks, restart policies,
+and persistent data volumes. PostgreSQL/Redis have no published ports in this
+stack. The API defaults to port 3001. JWT and optional SMTP configuration are
+passed from `.env` to the app; the container uses the internal database/Redis hosts.
+The image runs as a non-root user and includes Prisma and OpenSSL at runtime.
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```sh
+docker compose down          # keep database and Redis data
+# docker compose down --volumes  # DELETES persistent data; use only intentionally
 ```
 
-## Deployment
+## Database migrations
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Container startup waits for PostgreSQL, then runs `prisma migrate deploy`.
+A failed migration stops startup. Set `RUN_DB_INIT=false` only when migrations
+are applied separately. Production startup never runs `prisma db push`.
+For a schema change, create and review a migration against a development DB:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```sh
+npx prisma migrate dev --name describe_change
+# Commit both prisma/schema.prisma and prisma/migrations/.
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+An initial migration is included for new databases. If an existing database was
+created with `prisma db push`, back it up and confirm its schema matches the
+initial migration before baselining it (against that specific database):
 
-## Resources
+```sh
+npx prisma migrate resolve --applied 20261022000000_initial
+npx prisma migrate deploy
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Do not baseline an empty or mismatched database. Back up production data before
+migration; database rollback requires a separate reviewed recovery plan.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## CI and Docker image delivery
 
-## Support
+GitHub Actions workflow: `.github/workflows/ci.yml`.
+Pull requests and pushes to `main` run:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+1. Clean dependency installation, Prisma validation, migration against a fresh
+   PostgreSQL service, TypeScript checks, API/database e2e tests, and app build.
+2. Docker image build and Compose validation.
+3. Full-stack smoke test using that image, including container health and
+   applied migration status.
 
-## Stay in touch
+Only after these pass, pushes to `main` publish the tested image to:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```text
+ghcr.io/amitavrchy/live-courier-management-backend:latest
+ghcr.io/amitavrchy/live-courier-management-backend:<full-commit-sha>
+```
 
-## License
+PRs do not publish. The workflow can also be run manually from `main`.
+Publishing uses the built-in `GITHUB_TOKEN` with `packages: write`; no Docker Hub
+account or extra registry secret is required. GitHub Actions must be enabled and
+organization/package policy must allow publication. Images target linux/amd64.
+No automatic server deployment is configured.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Run a published image
+
+On a Docker host, place `docker-compose.yml` and a configured `.env` together.
+Set `APP_IMAGE` in `.env` to an immutable full commit SHA tag from a successful
+pipeline. For a private GHCR package, log in first with a GitHub token that has
+`read:packages` access, using `docker login ghcr.io` with `--password-stdin`.
+Then run:
+
+```sh
+docker compose pull app
+docker compose up -d --no-build --wait
+```
+
+Use HTTPS through your reverse proxy and configure `APP_LOGIN_URL` for the
+public app URL. Keep `.env` and registry credentials on the server, outside Git.
+
+## Checks
+
+```sh
+npx tsc --noEmit
+npm run build
+# Requires a migrated DATABASE_URL and a running Redis service:
+npm run test:e2e -- --runInBand
+```

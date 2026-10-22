@@ -7,18 +7,13 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-andyesqo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-andyesqo}
       POSTGRES_DB: ${POSTGRES_DB:-andyesqo}
-    ports:
-      # Host access for local tools (optional). App talks over the compose network.
-      # Host port defaults to 5433 to avoid clashing with a local Postgres on 5432.
-      # App containers still reach Postgres at postgres:5432 on the compose network.
-      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-andyesqo} -d ${POSTGRES_DB:-andyesqo}",
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-andyesqo} -d ${POSTGRES_DB:-andyesqo}',
         ]
       interval: 5s
       timeout: 5s
@@ -34,7 +29,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -42,6 +37,7 @@ services:
       - andyesqo
 
   app:
+    image: ${APP_IMAGE:-andyesqo:local}
     build:
       context: .
       dockerfile: Dockerfile
@@ -56,11 +52,19 @@ services:
       NODE_ENV: production
       PORT: ${PORT:-3001}
       RUN_DB_INIT: ${RUN_DB_INIT:-true}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      APP_LOGIN_URL: ${APP_LOGIN_URL:-http://localhost:3001/docs}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-andyesqo}:${POSTGRES_PASSWORD:-andyesqo}@postgres:5432/${POSTGRES_DB:-andyesqo}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
-      - "${PORT:-3001}:${PORT:-3001}"
+      - '${PORT:-3001}:${PORT:-3001}'
     networks:
       - andyesqo
 

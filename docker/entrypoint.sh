@@ -31,10 +31,8 @@ while [ "$i" -le "$ATTEMPTS" ]; do
 done
 
 if [ "${RUN_DB_INIT:-true}" = "true" ]; then
-  echo "[entrypoint] Synchronizing database schema (prisma db push)..."
-  npx prisma db push --skip-generate || {
-    echo "[entrypoint] Warning: prisma db push did not complete. App will still start." >&2
-  }
+  echo "[entrypoint] Applying database migrations..."
+  ./node_modules/.bin/prisma migrate deploy
 fi
 
 echo "[entrypoint] Starting application..."
