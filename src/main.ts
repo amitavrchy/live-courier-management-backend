@@ -3,7 +3,9 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { requestIdMiddleware } from './common/middleware/request-id.middleware';
+import { Env } from './common/enum/env.enum';
+import { loggerMiddleware } from './core/middleware/logger.middleware';
+import { requestIdMiddleware } from './core/middleware/request-id.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -23,6 +25,7 @@ async function bootstrap() {
   });
 
   app.use(requestIdMiddleware);
+  app.use(loggerMiddleware);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -62,9 +65,9 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.PORT ?? 3001;
+  const port = process.env[Env.PORT] ?? 3001;
   await app.listen(port);
   console.log(`API base:    http://localhost:${port}/api/v1`);
   console.log(`Swagger UI:  http://localhost:${port}/docs`);
 }
-bootstrap();
+void bootstrap();

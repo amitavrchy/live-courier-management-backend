@@ -1,0 +1,13 @@
+// ───────────────────────── Models ─────────────────────────
+
+model TenantSettings {
+  id             String  @id @default(uuid()) @db.Uuid
+  companyName    String
+  businessNumber String?
+  supportEmail   String?
+  supportPhone   String?
+  isTwoFactorOn  Boolean @default(false)
+  masterPassword String?
+
+  users Users[]
+}

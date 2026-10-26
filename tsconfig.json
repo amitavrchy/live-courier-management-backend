@@ -22,6 +22,10 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@prisma-gen": ["./prisma/generated/client"]
+    },
     "types": [
       "node"
     ]

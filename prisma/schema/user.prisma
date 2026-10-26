@@ -1,0 +1,35 @@
+model Users {
+  id             String          @id @default(uuid()) @db.Uuid
+  tenantId       String?         @db.Uuid
+  fullName       String
+  email          String          @unique
+  phone          String?         @unique
+  password       String
+  employee_id    String          @unique
+  role           User_Role
+  employmentType Employment_Type @map("employment_type")
+  depot          String?
+  status         User_Status     @default(ACTIVE)
+  createdAt      DateTime        @default(now())
+
+  tenant TenantSettings? @relation(fields: [tenantId], references: [id])
+
+  deliveries           Delivery[]
+  fleetVehicles        Fleet[]
+  inspections          Inspections[]
+  damageReports        DamageReport[]
+  repairRequests       RepairRequest[]
+  rosterAsDriver       Roster[]        @relation("RosterDriver")
+  rosterAsAssistant    Roster[]        @relation("RosterAssistant")
+  compliance           Compliance[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  conversationsAsUser1 Conversation[]  @relation("ConversationUser1")
+  conversationsAsUser2 Conversation[]  @relation("ConversationUser2")
+  messages             Message[]
+
+  @@index([tenantId])
+  @@index([role])
+  @@index([status])
+  @@index([depot])
+}

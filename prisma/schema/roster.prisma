@@ -1,0 +1,26 @@
+model Roster {
+  id          String       @id @default(uuid()) @db.Uuid
+  driverId    String       @db.Uuid
+  assistantId String?      @db.Uuid
+  shiftStart  DateTime
+  shiftEnd    DateTime
+  breakStart  DateTime?
+  breakEnd    DateTime?
+  vehicle     String?      @db.Uuid
+  type        String?
+  status      RosterStatus @default(DRAFT)
+  rosterDate  DateTime
+  depot       String?
+
+  driver    Users  @relation("RosterDriver", fields: [driverId], references: [id])
+  assistant Users? @relation("RosterAssistant", fields: [assistantId], references: [id])
+  fleet     Fleet? @relation(fields: [vehicle], references: [id])
+
+  @@index([driverId])
+  @@index([assistantId])
+  @@index([vehicle])
+  @@index([status])
+  @@index([rosterDate])
+  @@index([depot, rosterDate])
+  @@index([driverId, rosterDate])
+}

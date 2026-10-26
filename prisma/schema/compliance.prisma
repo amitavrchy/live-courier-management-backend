@@ -1,0 +1,28 @@
+
+model Compliance {
+  id                       String    @id @default(uuid()) @db.Uuid
+  driverId                 String    @db.Uuid
+  licenseURL               String?
+  licenseNumber            String?
+  licenseExpiry            DateTime?
+  visaURL                  String?
+  visaExpiry               DateTime?
+  safetyInductionExpiry    DateTime?
+  defensiveDrivingExpiry   DateTime?
+  firstaidExpiry           DateTime?
+  medicalCertificateExpiry DateTime?
+  policeCheckExpiry        DateTime?
+  employmentContractExpiry DateTime?
+  emergencyContact         String?
+  todaysHours              String?
+  weeklyHours              String?
+  remaining                String?
+
+  driver Users @relation(fields: [driverId], references: [id])
+
+  @@index([driverId])
+  @@index([licenseExpiry])
+  @@index([visaExpiry])
+  @@index([medicalCertificateExpiry])
+  @@index([policeCheckExpiry])
+}

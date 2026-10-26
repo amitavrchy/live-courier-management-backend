@@ -1,0 +1,17 @@
+
+model AuditLog {
+  id              String   @id @default(uuid()) @db.Uuid
+  actor           String   @db.Uuid
+  actionPerformed String
+  targetEntity    String?
+  module          String?
+  ip              String?
+  timestamp       DateTime @default(now())
+
+  user Users @relation(fields: [actor], references: [id])
+
+  @@index([actor])
+  @@index([timestamp])
+  @@index([module])
+  @@index([actor, timestamp])
+}

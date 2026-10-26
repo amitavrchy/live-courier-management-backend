@@ -3,10 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { resolve } from 'node:path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { CommonModule } from './common/common.module';
-import { MailModule } from './mail/mail.module';
-import { PrismaModule } from './prisma/prisma.module';
+import { CoreModule } from './core/core.module';
+import { LibModule } from './lib/lib.module';
+import { MainModule } from './main/main.module';
 
 @Module({
   imports: [
@@ -17,10 +16,9 @@ import { PrismaModule } from './prisma/prisma.module';
         resolve(process.cwd(), '.env.local'),
       ],
     }),
-    CommonModule,
-    PrismaModule,
-    MailModule,
-    AuthModule,
+    CoreModule,
+    LibModule,
+    MainModule,
   ],
   controllers: [AppController],
   providers: [AppService],

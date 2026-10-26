@@ -1,0 +1,29 @@
+model Conversation {
+  id        String   @id @default(uuid()) @db.Uuid
+  user1id   String   @db.Uuid
+  user2id   String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user1    Users     @relation("ConversationUser1", fields: [user1id], references: [id])
+  user2    Users     @relation("ConversationUser2", fields: [user2id], references: [id])
+  messages Message[]
+
+  @@unique([user1id, user2id])
+  @@index([user2id])
+}
+
+model Message {
+  id             String    @id @default(uuid()) @db.Uuid
+  senderId       String    @db.Uuid
+  conversationId String    @db.Uuid
+  content        String
+  timestamp      DateTime  @default(now())
+  isDelivered    DateTime?
+  isSeen         DateTime?
+
+  sender       Users        @relation(fields: [senderId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([senderId])
+  @@index([conversationId, timestamp])
+}

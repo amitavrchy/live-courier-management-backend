@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { AppModule } from '@/app.module';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { PrismaService } from './../src/prisma/prisma.service';
+import { PrismaService } from '@/lib/prisma/prisma.service';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -25,8 +25,12 @@ describe('AppController (e2e)', () => {
       .get('/v1/health')
       .expect(200)
       .expect(({ body }) => {
-        expect(body.success).toBe(true);
-        expect(body.data.status).toBe('ok');
+        const payload = body as {
+          success: boolean;
+          data: { status: string };
+        };
+        expect(payload.success).toBe(true);
+        expect(payload.data.status).toBe('ok');
       });
   });
 

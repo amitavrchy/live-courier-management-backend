@@ -1,0 +1,32 @@
+model Fleet {
+  id                 String        @id @default(uuid()) @db.Uuid
+  name               String
+  registration       String?
+  depot              String?
+  assignedDriver     String?       @db.Uuid
+  status             VehicleStatus @default(AVAILABLE)
+  nextService        DateTime?
+  vehicleCode        String?
+  year               DateTime?
+  bodyType           String?
+  fuelType           FuelType?
+  currentOdometer    Float?
+  registrationExpiry String?
+  insuranceExpiry    String?
+  createdAt          DateTime      @default(now())
+
+  driver Users? @relation(fields: [assignedDriver], references: [id])
+
+  deliveries     Delivery[]
+  maintenance    Maintenance[]
+  inspections    Inspections[]
+  damageReports  DamageReport[]
+  repairRequests RepairRequest[]
+  rosters        Roster[]
+
+  @@index([assignedDriver])
+  @@index([status])
+  @@index([depot])
+  @@index([nextService])
+  @@index([registration])
+}

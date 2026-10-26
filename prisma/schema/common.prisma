@@ -1,0 +1,74 @@
+enum RosterStatus {
+  PUBLISHED
+  DRAFT
+  UNASSIGNED
+}
+
+enum ActionName {
+  VIEW
+  EDIT
+}
+
+enum RepairRequestStatus {
+  PENDING_REVIEW
+  APPROVED
+  COMPLETED
+  REJECTED
+}
+
+enum InspectionStatus {
+  PASSED
+  ISSUE
+}
+
+enum MaintenancePriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FuelType {
+  Diesel
+  Octane
+  Petrol
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  MAINTENANCE
+  ASSIGNED
+  UNAVAILABLE
+  INSPECTION_REQUIRED
+  REPAIR_REQUIRED
+  GROUNDED
+}
+
+enum PriorityLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum User_Status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum User_Role {
+  PLATFORM_ADMIN
+  BUSINESS_ADMIN
+  SUPERVISOR
+  FLEET_MANAGER
+  ROSTER_MANAGER
+  DRIVER
+  ASSISTANT_DRIVER
+}
+
+enum Employment_Type {
+  FULL_TIME
+  PART_TIME
+  CONTRACTUAL
+}

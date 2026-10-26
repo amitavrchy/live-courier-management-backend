@@ -1,0 +1,124 @@
+model Maintenance {
+  id                  String                   @id @default(uuid()) @db.Uuid
+  vehicleId           String                   @db.Uuid
+  workCheckList       String[]
+  maintenanceType     String?
+  priorityLevel       MaintenancePriorityLevel @default(MEDIUM)
+  description         String?
+  maintenanceDate     DateTime?
+  assignedDepot       Int?
+  startTime           DateTime?
+  expectedCompletion  DateTime?
+  serviceLocationType String?
+  serviceProviderName String?
+  contactPhone        String?
+  estimatedPartsPrice Float?
+  estimatedLaborPrice Float?
+  totalEstimatedPrice Float?
+  vehicleAvailability String?
+  provider            String?
+  location            String?
+  createdAt           DateTime                 @default(now()) @map("createdat")
+
+  vehicle Fleet @relation(fields: [vehicleId], references: [id])
+
+  @@index([vehicleId])
+  @@index([priorityLevel])
+  @@index([maintenanceDate])
+  @@index([vehicleId, maintenanceDate])
+}
+
+model Inspections {
+  id         String           @id @default(uuid()) @db.Uuid
+  driverId   String           @db.Uuid
+  vehicleId  String           @db.Uuid
+  tyres      InspectionStatus
+  lights     InspectionStatus
+  mirrors    InspectionStatus
+  brakes     InspectionStatus
+  horn       InspectionStatus
+  fuel       InspectionStatus
+  exterior   InspectionStatus
+  driverNote String?
+  photos     String[]
+  createdAt  DateTime         @default(now())
+
+  driver  Users @relation(fields: [driverId], references: [id])
+  vehicle Fleet @relation(fields: [vehicleId], references: [id])
+
+  @@index([driverId])
+  @@index([vehicleId])
+  @@index([createdAt])
+  @@index([vehicleId, createdAt])
+}
+
+model DamageType {
+  id                     String   @id @default(uuid()) @db.Uuid
+  name                   String
+  description            String?
+  severity               String?
+  isRequirePhotoEvidence Boolean  @default(false)
+  isActive               Boolean  @default(true)
+  isAutomaticallyGround  Boolean  @default(false)
+  createdAt              DateTime @default(now())
+
+  @@index([isActive])
+}
+
+model IncidentType {
+  id                             String   @id @default(uuid()) @db.Uuid
+  name                           String
+  description                    String?
+  severity                       String?
+  isMandatorySupervisorReview    Boolean  @default(false)
+  isRequirePoliceReport          Boolean  @default(false)
+  isRequireStatutoryNotification Boolean  @default(false)
+  isActive                       Boolean  @default(true)
+  createdAt                      DateTime @default(now())
+
+  @@index([isActive])
+}
+
+model DamageReport {
+  id          String   @id @default(uuid()) @db.Uuid
+  reportedBy  String   @db.Uuid
+  vehicle     String   @db.Uuid
+  location    String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  reporter Users @relation(fields: [reportedBy], references: [id])
+  fleet    Fleet @relation(fields: [vehicle], references: [id])
+
+  @@index([reportedBy])
+  @@index([vehicle])
+  @@index([createdAt])
+}
+
+model RepairRequest {
+  id                        String                   @id @default(uuid()) @db.Uuid
+  repairID                  String?                  @db.Uuid
+  issue                     String
+  reportedBy                String                   @db.Uuid
+  priority                  MaintenancePriorityLevel @default(MEDIUM)
+  date                      DateTime                 @default(now())
+  status                    RepairRequestStatus      @default(PENDING_REVIEW)
+  vehicle                   String                   @db.Uuid
+  photos                    String[]
+  severity                  String?
+  safetyImpact              String?
+  canOperating              Boolean?
+  repairEstimatedPartsPrice Float?
+  repairEstimatedLaborPrice Float?
+  totalEstimatedCost        Float?
+
+  reporter Users @relation(fields: [reportedBy], references: [id])
+  fleet    Fleet @relation(fields: [vehicle], references: [id])
+
+  @@index([reportedBy])
+  @@index([vehicle])
+  @@index([status])
+  @@index([priority])
+  @@index([repairID])
+  @@index([vehicle, status])
+}

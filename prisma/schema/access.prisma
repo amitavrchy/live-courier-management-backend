@@ -1,0 +1,35 @@
+model Access_Roles {
+  id    String    @id @default(uuid()) @db.Uuid
+  roles User_Role
+
+  permissions RolePermission[]
+}
+
+model Access_Module {
+  id           String @id @default(uuid()) @db.Uuid
+  accessModule String
+
+  permissions RolePermission[]
+}
+
+model AccessAction {
+  id         String     @id @default(uuid()) @db.Uuid
+  actionName ActionName
+
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  id           String @id @default(uuid()) @db.Uuid
+  roleID       String @db.Uuid
+  moduleID     String @db.Uuid
+  permissionID String @db.Uuid
+
+  role       Access_Roles  @relation(fields: [roleID], references: [id])
+  module     Access_Module @relation(fields: [moduleID], references: [id])
+  permission AccessAction  @relation(fields: [permissionID], references: [id])
+
+  @@unique([roleID, moduleID, permissionID])
+  @@index([moduleID])
+  @@index([permissionID])
+}

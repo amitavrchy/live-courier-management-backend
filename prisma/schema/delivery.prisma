@@ -1,0 +1,41 @@
+model Delivery {
+  id                String        @id @default(uuid()) @db.Uuid
+  customerName      String
+  operationalZone   String?
+  destination       String
+  assignedDriver    String?       @db.Uuid
+  assignedVehicle   String?       @db.Uuid
+  scheduledDropTime DateTime?
+  priorityLevel     PriorityLevel @default(MEDIUM)
+  isDispatched      Boolean       @default(false)
+  status            String?
+  scheduledWindow   DateTime?
+  currentETA        DateTime?
+  remainingDistance String?
+  createdAt         DateTime      @default(now())
+
+  driver   Users?            @relation(fields: [assignedDriver], references: [id])
+  vehicle  Fleet?            @relation(fields: [assignedVehicle], references: [id])
+  packages DeliveryPackage[]
+
+  @@index([assignedDriver])
+  @@index([assignedVehicle])
+  @@index([status])
+  @@index([isDispatched])
+  @@index([priorityLevel])
+  @@index([scheduledDropTime])
+  @@index([operationalZone])
+  @@index([createdAt])
+}
+
+model DeliveryPackage {
+  id          String   @id @default(uuid()) @db.Uuid
+  description String?
+  weight      Float?
+  deliveryId  String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id])
+
+  @@index([deliveryId])
+}

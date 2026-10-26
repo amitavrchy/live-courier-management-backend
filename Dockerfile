@@ -9,7 +9,7 @@ RUN apt-get update \
 
 # ---- Dependencies (all, for build) ----
 FROM base AS deps
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json prisma.config.ts ./
 COPY prisma ./prisma
 RUN npm ci --include=dev
 
@@ -28,7 +28,7 @@ RUN apt-get update \
 ENV NODE_ENV=production
 ENV PORT=3001
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json prisma.config.ts ./
 COPY prisma ./prisma
 RUN npm ci --omit=dev && npm cache clean --force
 

@@ -36,8 +36,20 @@ module.exports = function (options) {
           ? [previousExternals]
           : []),
       ({ request }, callback) => {
+        if (!request) {
+          return callback();
+        }
+
         if (
-          request &&
+          request === '@prisma-gen' ||
+          request.startsWith('@prisma-gen/') ||
+          request.includes(`${path.sep}prisma${path.sep}generated${path.sep}client`) ||
+          request.includes('prisma/generated/client')
+        ) {
+          return callback(null, 'commonjs ../prisma/generated/client');
+        }
+
+        if (
           NATIVE_EXTERNALS.some(
             (name) => request === name || request.startsWith(`${name}/`),
           )
